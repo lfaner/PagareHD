@@ -20,7 +20,7 @@ def calcular_cft_tea_cartera(detalle: list[dict]) -> float:
         raise ValueError("No hay pagarés para calcular el CFT")
 
     flujos = [
-        (p["neto_usd"], p["valor_nominal_usd"], p["plazo_dias"])
+        (p["neto_sin_iva_usd"], p["valor_nominal_usd"], p["plazo_dias"])
         for p in detalle
     ]
 
@@ -121,7 +121,8 @@ def calcular_neto_pagare(
     comision  = valor_nominal * (comision_pct / 100)
     iva_usd   = (arancel + comision) * IVA_PCT
 
-    neto_usd = valor_nominal - descuento - arancel - comision - iva_usd
+    neto_usd         = valor_nominal - descuento - arancel - comision - iva_usd
+    neto_sin_iva_usd = valor_nominal - descuento - arancel - comision
 
     # ----------------------------------------------------------
     # Cargos en ARS (convertidos desde USD al tipo de cambio BNA)
@@ -150,6 +151,7 @@ def calcular_neto_pagare(
         "comision_usd":        round(comision,         2),
         "iva_usd":             round(iva_usd,          2),
         "neto_usd":            round(neto_usd,         2),
+        "neto_sin_iva_usd":    round(neto_sin_iva_usd, 2),
         # ARS
         "tipo_cambio_bna":      round(tipo_cambio_bna,  2),
         "derechos_mercado_ars": round(derechos_ars,     2),
