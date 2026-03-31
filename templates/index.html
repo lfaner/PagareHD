@@ -188,6 +188,7 @@
     </p>
 
     <!-- ===== TABLA DETALLE ===== -->
+    <div id="seccion-detalle">
     <h5>Detalle por pagaré</h5>
     <div class="table-responsive">
     <table id="tabla-detalle" class="table table-sm table-bordered align-middle table-fin">
@@ -262,9 +263,10 @@
         </tfoot>
     </table>
     </div>
+    </div>{# /seccion-detalle #}
 
     <!-- ===== TARJETAS RESUMEN ===== -->
-    <div class="d-flex flex-wrap gap-4 mt-4 mb-5">
+    <div id="seccion-resumen" class="d-flex flex-wrap gap-4 mt-4 mb-3">
 
         <!-- USD -->
         <div class="card card-usd" style="min-width:280px">
@@ -312,9 +314,12 @@
 
     </div>
 
-    <div class="mb-5">
-        <button class="btn btn-outline-secondary btn-sm" onclick="exportarImagen()">
-            Exportar como imagen
+    <div class="d-flex gap-2 mb-5">
+        <button class="btn btn-outline-secondary btn-sm" onclick="exportarDetalle()">
+            ⬇ Exportar detalle
+        </button>
+        <button class="btn btn-outline-secondary btn-sm" onclick="exportarResumen()">
+            ⬇ Exportar resumen
         </button>
     </div>
     {% endif %}
@@ -357,21 +362,35 @@
         document.getElementById("calc-form").submit();
     }
 
-    function exportarImagen() {
-        const tabla   = document.getElementById("tabla-detalle");
-        if (!tabla) return;
+    function _capturarElemento(el, nombreArchivo) {
+        // Clonar en un wrapper limpio fuera de pantalla
         const wrapper = document.createElement("div");
-        wrapper.style.padding    = "16px";
-        wrapper.style.background = "#fff";
-        wrapper.appendChild(tabla.cloneNode(true));
+        wrapper.style.cssText = "position:fixed;left:-9999px;top:0;background:#fff;padding:20px;";
+        const clone = el.cloneNode(true);
+        // Quitar botones de acción (columna Eliminar y botón export)
+        clone.querySelectorAll(".btn-outline-danger, .btn-outline-secondary").forEach(b => {
+            const cell = b.closest("td, th");
+            if (cell) cell.style.visibility = "hidden";
+        });
+        wrapper.appendChild(clone);
         document.body.appendChild(wrapper);
-        html2canvas(wrapper).then(canvas => {
+        html2canvas(wrapper, { scale: 2, useCORS: true }).then(canvas => {
             const link    = document.createElement("a");
-            link.download = "pagares_hd.png";
-            link.href     = canvas.toDataURL();
+            link.download = nombreArchivo;
+            link.href     = canvas.toDataURL("image/png");
             link.click();
             document.body.removeChild(wrapper);
         });
+    }
+
+    function exportarDetalle() {
+        const el = document.getElementById("seccion-detalle");
+        if (el) _capturarElemento(el, "pagares_hd_detalle.png");
+    }
+
+    function exportarResumen() {
+        const el = document.getElementById("seccion-resumen");
+        if (el) _capturarElemento(el, "pagares_hd_resumen.png");
     }
 
     // Normalizar separador decimal en valor nominal
