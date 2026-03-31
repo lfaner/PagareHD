@@ -315,6 +315,8 @@
 
     </div>{# /flex cards #}
 
+    </div>{# /seccion-resumen #}
+
     <!-- CFT -->
     <div class="mt-3 p-3 rounded-3" style="background:#eaf4ff; display:inline-block; min-width:280px;">
         <span class="text-muted small">CFT sin IVA</span>
@@ -322,8 +324,6 @@
             {{ "%.2f"|format(resultado.cft_tea)|replace(".", ",") }} %
         </div>
     </div>
-
-    </div>{# /seccion-resumen #}
 
     <div class="d-flex gap-2 mb-5">
         <button class="btn btn-outline-secondary btn-sm" onclick="exportarDetalle()">
