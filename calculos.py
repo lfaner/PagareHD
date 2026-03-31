@@ -7,6 +7,47 @@ from cgb_utils import (
 )
 
 
+def calcular_cft_tea_cartera(detalle: list[dict]) -> float:
+    """
+    CFT TEA de la cartera (solo flujos en USD).
+
+    Resuelve por bisección:
+      sum(neto_i) = sum(nominal_i / (1 + TEA)^(plazo_i / 365))
+
+    Retorna el TEA como porcentaje, ej: 45.23
+    """
+    if not detalle:
+        raise ValueError("No hay pagarés para calcular el CFT")
+
+    flujos = [
+        (p["neto_usd"], p["valor_nominal_usd"], p["plazo_dias"])
+        for p in detalle
+    ]
+
+    suma_netos = sum(neto for neto, _, _ in flujos)
+
+    def f(r):
+        return (
+            sum(nominal / (1 + r) ** (plazo / 365) for _, nominal, plazo in flujos)
+            - suma_netos
+        )
+
+    lo, hi = 1e-6, 100.0          # 0,0001 % … 10 000 % TEA
+    if f(lo) < 0:
+        raise ValueError("No se puede calcular el CFT: el neto supera al nominal")
+
+    for _ in range(200):           # bisección — converge en ~50 iteraciones
+        mid = (lo + hi) / 2
+        if f(mid) > 0:
+            lo = mid
+        else:
+            hi = mid
+        if (hi - lo) < 1e-10:
+            break
+
+    return round((lo + hi) / 2 * 100, 2)    # retorna como %
+
+
 # ============================================================
 # FUNCIÓN PRINCIPAL
 # ============================================================

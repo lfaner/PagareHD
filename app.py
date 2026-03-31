@@ -2,7 +2,7 @@ from flask import Flask, render_template, request
 from flask import send_from_directory
 from datetime import date, datetime
 import os
-from calculos import calcular_neto_pagare
+from calculos import calcular_cft_tea_cartera, calcular_neto_pagare
 from openpyxl import load_workbook
 from openpyxl.utils.datetime import from_excel
 
@@ -287,10 +287,13 @@ def index():
                 2,
             )
 
+            cft_tea = calcular_cft_tea_cartera(detalle)
+
             resultado = {
-                "detalle":        detalle,
-                "totales":        totales,
+                "detalle":         detalle,
+                "totales":         totales,
                 "tipo_cambio_bna": tipo_cambio_bna,
+                "cft_tea":         cft_tea,
             }
 
         except Exception as e:
