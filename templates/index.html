@@ -1,4 +1,7 @@
-{% macro formato(valor) %}
+{% macro usd(valor) %}
+    {{ "{:,.2f}".format(valor).replace(",", "X").replace(".", ",").replace("X", ".") }}
+{% endmacro %}
+{% macro ars(valor) %}
     {{ "{:,.2f}".format(valor).replace(",", "X").replace(".", ",").replace("X", ".") }}
 {% endmacro %}
 {% macro fecha_corta(valor) %}
@@ -16,133 +19,75 @@
 <html lang="es">
 <head>
     <meta charset="UTF-8">
-    <title>Calculadora de Descuento de Pagarés HD</title>
+    <title>Calculadora de Pagarés HD</title>
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
     <style>
         :root {
             --azul-900: #0b2e4a;
             --azul-700: #1f4e79;
             --azul-200: #e3f1fb;
+            --verde-100: #e8f5e9;
+            --verde-900: #1b5e20;
             --celeste-50: #f5f9fd;
             --gris-100: #eef2f6;
             --gris-400: #c6d0da;
         }
-        body {
-            background: linear-gradient(180deg, var(--celeste-50), #ffffff 40%);
-        }
-        h3, h5 {
-            color: var(--azul-900);
-            letter-spacing: 0.2px;
-        }
-        .table-fin {
-            border-color: var(--gris-400);
-            font-variant-numeric: tabular-nums;
-        }
-        .table-fin td, .table-fin th {
-            border-color: #dbe3ea;
-            border-left: 0;
-            border-right: 0;
-        }
-        .table-fin {
-            border-left: 0;
-            border-right: 0;
-        }
+        body { background: linear-gradient(180deg, var(--celeste-50), #ffffff 40%); }
+        h3, h5 { color: var(--azul-900); letter-spacing: 0.2px; }
+
+        /* ---- tabla detalle ---- */
+        .table-fin { border-color: var(--gris-400); font-variant-numeric: tabular-nums; }
+        .table-fin td, .table-fin th { border-color: #dbe3ea; border-left:0; border-right:0; }
         .table-fin thead th {
-            background: var(--azul-200);
-            color: var(--azul-900);
-            position: sticky;
-            top: 0;
-            z-index: 1;
-            text-align: center;
-            white-space: nowrap;
+            background: var(--azul-200); color: var(--azul-900);
+            position: sticky; top: 0; z-index: 1;
+            text-align: center; white-space: nowrap;
         }
-        .table-fin tbody td {
-            vertical-align: middle;
+        .table-fin thead th.th-ars {
+            background: var(--verde-100); color: var(--verde-900);
         }
-        .table-fin .col-accion {
-            width: 90px;
-        }
-        .table-fin .col-fecha {
-            width: 120px;
-        }
-        .table-fin .col-fecha,
-        .table-fin .col-plazo {
-            text-align: center;
-        }
-        .table-fin tbody tr:hover {
-            background: var(--gris-100);
-        }
-        .table-fin tbody tr:nth-child(even) {
-            background: #f8fafc;
-        }
-        .table-fin .num {
-            text-align: right;
-        }
-        .table-fin .vn {
-            background: #f2f7fb;
-            font-weight: 600;
-        }
-        .table-fin .descuento {
-            background: #f7fafc;
-        }
-        .table-fin .neto {
-            background: #eaf4ff;
-            color: var(--azul-900);
-        }
-        .totales-card {
-            border: 1px solid var(--gris-400);
-            box-shadow: 0 4px 12px rgba(11, 46, 74, 0.08);
-            display: inline-block;
-            width: fit-content;
-            max-width: 100%;
-        }
-        .totales-card .card-header {
-            background: var(--azul-200);
-            color: var(--azul-900);
-            font-weight: 600;
-        }
-        .totales-table {
-            font-size: 0.9rem;
-            width: auto !important;
-            table-layout: auto;
-            display: inline-table;
-        }
-        .totales-table th,
-        .totales-table td {
-            padding: 0.15rem 0.3rem;
-            white-space: nowrap;
-            width: auto;
-        }
-        .totales-table th {
-            max-width: 260px;
-        }
-        .totales-table td {
-            max-width: 150px;
+        .table-fin tbody td { vertical-align: middle; }
+        .table-fin tbody tr:hover       { background: var(--gris-100); }
+        .table-fin tbody tr:nth-child(even) { background: #f8fafc; }
+        .table-fin .num     { text-align: right; }
+        .table-fin .vn      { background: #f2f7fb; font-weight: 600; }
+        .table-fin .neto    { background: #eaf4ff; color: var(--azul-900); }
+        .table-fin .ars-col { background: #f1faf2; color: var(--verde-900); }
+        .col-fecha, .col-plazo { text-align: center; white-space: nowrap; }
+
+        /* ---- card moneda ---- */
+        .card-usd  { border-left: 4px solid var(--azul-700); }
+        .card-ars  { border-left: 4px solid #388e3c; }
+        .card-usd .card-header { background: var(--azul-200);  color: var(--azul-900);  font-weight:600; }
+        .card-ars .card-header { background: var(--verde-100); color: var(--verde-900); font-weight:600; }
+
+        /* ---- totales tabla ---- */
+        .totales-table { font-size:.9rem; width:auto !important; table-layout:auto; display:inline-table; }
+        .totales-table th, .totales-table td {
+            padding:.15rem .4rem; white-space:nowrap;
         }
         .totales-table .neto-row th,
-        .totales-table .neto-row td {
-            background: #eaf4ff;
-            color: var(--azul-900);
-            font-weight: 700;
-        }
-        .totales-table .highlight-row th,
-        .totales-table .highlight-row td {
-            background: #f2f8ff;
-        }
-        .badge-soft {
-            background: var(--azul-700);
-            color: #fff;
-            font-weight: 600;
-        }
+        .totales-table .neto-row td { background:#eaf4ff; color:var(--azul-900); font-weight:700; }
+        .totales-table .hl-row th,
+        .totales-table .hl-row td  { background:#f2f8ff; }
+
+        .badge-soft { background: var(--azul-700); color:#fff; font-weight:600; }
+        .badge-tc   { background: #388e3c;          color:#fff; font-weight:600; font-size:.8rem; }
+
+        .divider-ars { border-top: 2px solid #a5d6a7; }
     </style>
 </head>
-
 <body class="bg-light">
-
 <div class="container mt-4">
-    <h3 class="mb-4">Calculadora de Descuento de Pagarés HD</h3>
 
-    <form action="/cargar-excel" method="post" enctype="multipart/form-data" class="row g-3 align-items-end">
+    <h3 class="mb-1">Calculadora de Pagarés HD</h3>
+    <p class="text-muted small mb-4">Hard Dólar · USD / ARS</p>
+
+    <!-- ===== CARGA EXCEL ===== -->
+    <form action="/cargar-excel" method="post" enctype="multipart/form-data" class="row g-3 align-items-end mb-2">
+        {% for key in ["fecha_operacion","plazo_operacion","tna_arancel","comision_pct","tipo_cambio_bna"] %}
+            <input type="hidden" name="{{ key }}" value="{{ defaults[key] }}">
+        {% endfor %}
         <div class="col-md-5">
             <label class="form-label">Subir Excel con pagarés</label>
             <input type="file" name="excel_file" class="form-control" accept=".xlsx,.xlsm" required>
@@ -151,76 +96,80 @@
             <button class="btn btn-outline-primary w-100">Cargar Excel</button>
         </div>
         <div class="col-md-3 d-flex">
-            <a class="btn btn-outline-primary w-100" href="/modelo-excel">
-                Descargar Excel modelo
-            </a>
+            <a class="btn btn-outline-secondary w-100" href="/modelo-excel">Descargar modelo</a>
         </div>
     </form>
 
+    <!-- ===== FORMULARIO PRINCIPAL ===== -->
     <form id="calc-form" action="/" method="post" class="row g-3 mt-1">
         <input type="hidden" name="delete_row_id" id="delete-row-id" value="">
 
-        <!-- ===== DATOS GENERALES ===== -->
-        <div class="col-md-3">
+        <!-- Datos generales -->
+        <div class="col-md-2">
             <label class="form-label">Fecha operación</label>
             <input type="date" name="fecha_operacion" class="form-control"
-                    value="{{ defaults.fecha_operacion }}" required>
+                   value="{{ defaults.fecha_operacion }}" required>
         </div>
-
-        <div class="col-md-3">
+        <div class="col-md-2">
             <label class="form-label">Plazo</label>
             <select name="plazo_operacion" class="form-select">
                 <option value="T+0" {% if defaults.plazo_operacion == "T+0" %}selected{% endif %}>T+0</option>
                 <option value="T+1" {% if defaults.plazo_operacion == "T+1" %}selected{% endif %}>T+1</option>
             </select>
         </div>
-
-        <div class="col-md-3">
+        <div class="col-md-2">
             <label class="form-label">Arancel TNA (%)</label>
             <input type="number" step="any" min="0" name="tna_arancel" class="form-control"
-                    value="{{ defaults.tna_arancel }}" required>
+                   value="{{ defaults.tna_arancel }}" required>
         </div>
-        <div class="col-md-3">
+        <div class="col-md-2">
             <label class="form-label">Comisión (%)</label>
             <input type="number" step="any" min="0" name="comision_pct" class="form-control"
-                    value="{{ defaults.comision_pct }}" required>
+                   value="{{ defaults.comision_pct }}" required>
+        </div>
+        <div class="col-md-3">
+            <label class="form-label">
+                TC BNA vendedor
+                <span class="text-muted small">(ARS/USD — día hábil anterior)</span>
+            </label>
+            <input type="number" step="any" min="0" name="tipo_cambio_bna" class="form-control"
+                   placeholder="ej: 1250.50"
+                   value="{{ defaults.tipo_cambio_bna }}" required>
         </div>
 
-        <!-- ===== PAGARÉS ===== -->
-        <div class="col-12 mt-4">
-            <h5 class="mb-0">Pagarés</h5>
+        <!-- Pagarés -->
+        <div class="col-12 mt-3">
+            <h5 class="mb-0">Pagarés <span class="text-muted small fw-normal">(valores en USD)</span></h5>
         </div>
-
         <div class="col-12" id="pagares">
             {% for row in form_rows %}
-                <div class="row g-2 pagare mb-2">
-                    <input type="hidden" name="row_id[]" value="{{ row.row_id }}" class="row-id">
-                    <div class="col-md-3">
-                        <input type="text" inputmode="decimal" name="valor_nominal[]" class="form-control valor-nominal"
-                                placeholder="Valor nominal" value="{{ row.valor_nominal }}" required>
-                    </div>
-                    <div class="col-md-3">
-                        <input type="date" name="fecha_vencimiento[]" class="form-control"
-                                value="{{ row.fecha_vencimiento }}" required>
-                    </div>
-                    <div class="col-md-3">
-                        <input type="number" step="any" min="0" name="tna_descuento[]" class="form-control"
-                                placeholder="TNA descuento %" value="{{ row.tna_descuento }}" required>
-                    </div>
-                    <div class="col-md-3">
-                        <button type="button" class="btn btn-danger w-100"
-                                onclick="this.parentElement.parentElement.remove()">X</button>
-                    </div>
+            <div class="row g-2 pagare mb-2">
+                <input type="hidden" name="row_id[]" value="{{ row.row_id }}" class="row-id">
+                <div class="col-md-3">
+                    <input type="text" inputmode="decimal" name="valor_nominal[]"
+                           class="form-control valor-nominal" placeholder="Valor nominal (USD)"
+                           value="{{ row.valor_nominal }}" required>
                 </div>
+                <div class="col-md-3">
+                    <input type="date" name="fecha_vencimiento[]" class="form-control"
+                           value="{{ row.fecha_vencimiento }}" required>
+                </div>
+                <div class="col-md-3">
+                    <input type="number" step="any" min="0" name="tna_descuento[]"
+                           class="form-control" placeholder="TNA descuento %"
+                           value="{{ row.tna_descuento }}" required>
+                </div>
+                <div class="col-md-3">
+                    <button type="button" class="btn btn-danger w-100"
+                            onclick="this.parentElement.parentElement.remove()">✕</button>
+                </div>
+            </div>
             {% endfor %}
         </div>
-
-        <div class="col-12">
+        <div class="col-12 d-flex gap-2">
             <button type="button" class="btn btn-secondary btn-sm" onclick="agregarPagare()">
                 + Agregar pagaré
             </button>
-        </div>
-        <div class="col-12">
             <button class="btn btn-primary">Calcular</button>
         </div>
     </form>
@@ -230,107 +179,144 @@
     {% endif %}
 
     {% if resultado %}
-        <hr class="my-4">
-        <h5>Detalle por pagaré</h5>
+    <hr class="my-4">
 
-        <table id="tabla-detalle" class="table table-sm table-bordered table-striped align-middle table-fin">
-            <thead class="table-light">
-                <tr>
-                    <th>#</th>
-                    <th>VN</th>
-                    <th>Vencimiento</th>
-                    <th>Cobro</th>
-                    <th>Plazo</th>
-                    <th>%Descuento</th>
-                    <th>Descuento</th>
-                    <th>Derechos</th>
-                    <th>Arancel</th>
-                    <th>Comisión</th>
-                    <th>IVA</th>
-                    <th>IIBB</th>
-                    <th>Neto</th>
-                    <th>Acción</th>
-                </tr>
-            </thead>
-            <tbody>
-            {% for r in resultado.detalle %}
-                <tr>
-                    <td>{{ loop.index }}</td>
-                    <td class="num vn">{{ formato(r.valor_nominal) }}</td>
-                    <td class="col-fecha">{{ fecha_corta(r.fecha_vencimiento) }}</td>
-                    <td class="col-fecha">{{ fecha_corta(r.fecha_cobro) }}</td>
-                    <td class="col-plazo">{{ r.plazo_dias }}</td>
-                    <td class="num">{{ formato(r.tna_descuento) }}</td>
-                    <td class="num descuento">{{ formato(r.descuento) }}</td>
-                    <td class="num">{{ formato(r.derechos_mercado) }}</td>
-                    <td class="num">{{ formato(r.arancel) }}</td>
-                    <td class="num">{{ formato(r.comision) }}</td>
-                    <td class="num">{{ formato(r.iva) }}</td>
-                    <td class="num">{{ formato(r.iibb) }}</td>
-                    <td class="num fw-bold neto">{{ formato(r.neto_a_recibir) }}</td>
-                    <td class="text-center">
-                        <button type="button" class="btn btn-sm btn-outline-danger"
-                                onclick="eliminarPagare('{{ r.row_id }}')">Eliminar</button>
-                    </td>
-                </tr>
-            {% endfor %}
-            </tbody>
-            <tfoot>
-                <tr>
-                    <th class="text-end">Totales</th>
-                    <th class="num vn">{{ formato(resultado.totales.valor_nominal) }}</th>
-                    <th></th>
-                    <th class="col-fecha fw-bold">PPV</th>
-                    <th class="col-plazo fw-bold">{{ formato(resultado.totales.ppv) }}</th>
-                    <th></th>
-                    <th class="num descuento">{{ formato(resultado.totales.descuento) }}</th>
-                    <th class="num">{{ formato(resultado.totales.derechos_mercado) }}</th>
-                    <th class="num">{{ formato(resultado.totales.arancel) }}</th>
-                    <th class="num">{{ formato(resultado.totales.comision) }}</th>
-                    <th class="num">{{ formato(resultado.totales.iva) }}</th>
-                    <th class="num">{{ formato(resultado.totales.iibb) }}</th>
-                    <th class="num fw-bold neto">{{ formato(resultado.totales.neto_a_recibir) }}</th>
-                    <th></th>
-                </tr>
-            </tfoot>
-        </table>
+    <!-- tipo de cambio usado -->
+    <p class="mb-3">
+        <span class="badge badge-tc">TC BNA: $ {{ resultado.tipo_cambio_bna | round(2) }}</span>
+        <span class="text-muted small ms-2">Derechos de mercado e IVA sobre derechos cobrados en ARS</span>
+    </p>
 
-        <div class="card totales-card mt-4">
-            <div class="card-header">Totales</div>
+    <!-- ===== TABLA DETALLE ===== -->
+    <h5>Detalle por pagaré</h5>
+    <div class="table-responsive">
+    <table id="tabla-detalle" class="table table-sm table-bordered align-middle table-fin">
+        <thead>
+            <tr>
+                <th rowspan="2">#</th>
+                <th rowspan="2">VN (USD)</th>
+                <th rowspan="2">Vencimiento</th>
+                <th rowspan="2">Cobro</th>
+                <th rowspan="2">Plazo</th>
+                <th rowspan="2">TNA %</th>
+                <!-- USD -->
+                <th colspan="6" class="text-center">USD</th>
+                <!-- ARS -->
+                <th colspan="2" class="text-center th-ars">ARS</th>
+                <th rowspan="2"></th>
+            </tr>
+            <tr>
+                <th>Descuento</th>
+                <th>Arancel</th>
+                <th>Comisión</th>
+                <th>IVA</th>
+                <th>IIBB</th>
+                <th class="neto">Neto</th>
+                <th class="th-ars">Derechos</th>
+                <th class="th-ars">IVA Der.</th>
+            </tr>
+        </thead>
+        <tbody>
+        {% for r in resultado.detalle %}
+            <tr>
+                <td>{{ loop.index }}</td>
+                <td class="num vn">{{ usd(r.valor_nominal_usd) }}</td>
+                <td class="col-fecha">{{ fecha_corta(r.fecha_vencimiento) }}</td>
+                <td class="col-fecha">{{ fecha_corta(r.fecha_cobro) }}</td>
+                <td class="col-plazo">{{ r.plazo_dias }}</td>
+                <td class="num">{{ usd(r.tna_descuento) }}</td>
+                <!-- USD -->
+                <td class="num">{{ usd(r.descuento_usd) }}</td>
+                <td class="num">{{ usd(r.arancel_usd) }}</td>
+                <td class="num">{{ usd(r.comision_usd) }}</td>
+                <td class="num">{{ usd(r.iva_usd) }}</td>
+                <td class="num">{{ usd(r.iibb_usd) }}</td>
+                <td class="num fw-bold neto">{{ usd(r.neto_usd) }}</td>
+                <!-- ARS -->
+                <td class="num ars-col">{{ ars(r.derechos_mercado_ars) }}</td>
+                <td class="num ars-col">{{ ars(r.iva_derechos_ars) }}</td>
+                <td class="text-center">
+                    <button type="button" class="btn btn-sm btn-outline-danger"
+                            onclick="eliminarPagare('{{ r.row_id }}')">Eliminar</button>
+                </td>
+            </tr>
+        {% endfor %}
+        </tbody>
+        <tfoot>
+            <tr>
+                <th colspan="2" class="text-end">Totales</th>
+                <th></th>
+                <th class="col-fecha fw-bold">PPV</th>
+                <th class="col-plazo fw-bold">{{ resultado.totales.ppv | int }}</th>
+                <th></th>
+                <th class="num">{{ usd(resultado.totales.descuento_usd) }}</th>
+                <th class="num">{{ usd(resultado.totales.arancel_usd) }}</th>
+                <th class="num">{{ usd(resultado.totales.comision_usd) }}</th>
+                <th class="num">{{ usd(resultado.totales.iva_usd) }}</th>
+                <th class="num">{{ usd(resultado.totales.iibb_usd) }}</th>
+                <th class="num fw-bold neto">{{ usd(resultado.totales.neto_usd) }}</th>
+                <th class="num ars-col">{{ ars(resultado.totales.derechos_mercado_ars) }}</th>
+                <th class="num ars-col">{{ ars(resultado.totales.iva_derechos_ars) }}</th>
+                <th></th>
+            </tr>
+        </tfoot>
+    </table>
+    </div>
+
+    <!-- ===== TARJETAS RESUMEN ===== -->
+    <div class="d-flex flex-wrap gap-4 mt-4 mb-5">
+
+        <!-- USD -->
+        <div class="card card-usd" style="min-width:280px">
+            <div class="card-header">Resumen en USD</div>
             <div class="card-body p-0">
-                <table id="tabla-totales" class="table table-sm mb-0 totales-table">
-                    {% for k, v in resultado.totales.items() %}
-                        <tr class="
-                            {% if k == 'neto_a_recibir' %}neto-row{% endif %}
-                              {% if k in ['valor_nominal', 'valor_descontado'] %}highlight-row{% endif %}
-                        ">
-                             {% if k == "cantidad_pagares" %}
-                                 <th>Cantidad pagarés</th>
-                                 <td class="text-end fw-bold"><span class="badge badge-soft">{{ v|int }}</span></td>
-                             {% else %}
-                                  {% set label = k.replace("_"," ").title() %}
-                                  {% if k == "iva" %}
-                                         {% set label = "IVA" %}
-                                  {% elif k == "iibb" %}
-                                         {% set label = "IIBB" %}
-                                  {% elif k == "ppv" %}
-                                         {% set label = "PPV (días)" %}
-                                  {% endif %}
-                                  <th>{{ label }}</th>
-                                  <td class="text-end fw-bold">{{ formato(v) }}</td>
-                             {% endif %}
-                        </tr>
-                    {% endfor %}
+                <table class="table table-sm mb-0 totales-table">
+                    <tr><th>Pagarés</th>
+                        <td class="text-end"><span class="badge badge-soft">{{ resultado.totales.cantidad_pagares }}</span></td></tr>
+                    <tr class="hl-row"><th>Valor nominal</th>
+                        <td class="text-end fw-bold">{{ usd(resultado.totales.valor_nominal_usd) }}</td></tr>
+                    <tr><th>Descuento</th>
+                        <td class="text-end">{{ usd(resultado.totales.descuento_usd) }}</td></tr>
+                    <tr class="hl-row"><th>Valor descontado</th>
+                        <td class="text-end fw-bold">{{ usd(resultado.totales.valor_descontado_usd) }}</td></tr>
+                    <tr><th>Arancel</th>
+                        <td class="text-end">{{ usd(resultado.totales.arancel_usd) }}</td></tr>
+                    <tr><th>Comisión</th>
+                        <td class="text-end">{{ usd(resultado.totales.comision_usd) }}</td></tr>
+                    <tr><th>IVA</th>
+                        <td class="text-end">{{ usd(resultado.totales.iva_usd) }}</td></tr>
+                    <tr><th>IIBB</th>
+                        <td class="text-end">{{ usd(resultado.totales.iibb_usd) }}</td></tr>
+                    <tr class="neto-row"><th>Neto a recibir</th>
+                        <td class="text-end">{{ usd(resultado.totales.neto_usd) }}</td></tr>
                 </table>
             </div>
         </div>
 
-        <div class="mt-3 mb-5">
-            <button class="btn btn-outline-secondary btn-sm" onclick="exportarImagen()">
-                Exportar como imagen
-            </button>
+        <!-- ARS -->
+        <div class="card card-ars" style="min-width:280px">
+            <div class="card-header">Cargos en ARS</div>
+            <div class="card-body p-0">
+                <table class="table table-sm mb-0 totales-table">
+                    <tr><th>TC BNA</th>
+                        <td class="text-end fw-bold">$ {{ resultado.tipo_cambio_bna | round(2) }}</td></tr>
+                    <tr><th>Derechos de mercado</th>
+                        <td class="text-end">{{ ars(resultado.totales.derechos_mercado_ars) }}</td></tr>
+                    <tr class="neto-row"><th>IVA sobre derechos</th>
+                        <td class="text-end">{{ ars(resultado.totales.iva_derechos_ars) }}</td></tr>
+                </table>
+            </div>
         </div>
+
+    </div>
+
+    <div class="mb-5">
+        <button class="btn btn-outline-secondary btn-sm" onclick="exportarImagen()">
+            Exportar como imagen
+        </button>
+    </div>
     {% endif %}
+
 </div>
 
 <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
@@ -345,19 +331,19 @@
         div.innerHTML = `
             <input type="hidden" name="row_id[]" value="${nextRowId}" class="row-id">
             <div class="col-md-3">
-                <input type="text" inputmode="decimal" name="valor_nominal[]" class="form-control valor-nominal"
-                        placeholder="Valor nominal" required>
+                <input type="text" inputmode="decimal" name="valor_nominal[]"
+                       class="form-control valor-nominal" placeholder="Valor nominal (USD)" required>
             </div>
             <div class="col-md-3">
                 <input type="date" name="fecha_vencimiento[]" class="form-control" required>
             </div>
             <div class="col-md-3">
-                <input type="number" step="any" min="0" name="tna_descuento[]" class="form-control"
-                        placeholder="TNA descuento %" required>
+                <input type="number" step="any" min="0" name="tna_descuento[]"
+                       class="form-control" placeholder="TNA descuento %" required>
             </div>
             <div class="col-md-3">
                 <button type="button" class="btn btn-danger w-100"
-                        onclick="this.parentElement.parentElement.remove()">X</button>
+                        onclick="this.parentElement.parentElement.remove()">✕</button>
             </div>
         `;
         container.appendChild(div);
@@ -370,29 +356,28 @@
     }
 
     function exportarImagen() {
-        const elementos = document.querySelectorAll("#tabla-detalle, #tabla-totales");
-        if (!elementos.length) return;
+        const tabla   = document.getElementById("tabla-detalle");
+        if (!tabla) return;
         const wrapper = document.createElement("div");
-        wrapper.style.padding = "16px";
+        wrapper.style.padding    = "16px";
         wrapper.style.background = "#fff";
-        elementos.forEach(el => wrapper.appendChild(el.cloneNode(true)));
+        wrapper.appendChild(tabla.cloneNode(true));
         document.body.appendChild(wrapper);
         html2canvas(wrapper).then(canvas => {
-            const link = document.createElement("a");
+            const link    = document.createElement("a");
             link.download = "pagares_hd.png";
-            link.href = canvas.toDataURL();
+            link.href     = canvas.toDataURL();
             link.click();
             document.body.removeChild(wrapper);
         });
     }
 
-    // Normalizar separador decimal en inputs de valor nominal
+    // Normalizar separador decimal en valor nominal
     document.getElementById("calc-form").addEventListener("submit", function () {
         document.querySelectorAll(".valor-nominal").forEach(input => {
             input.value = input.value.replace(",", ".");
         });
     });
 </script>
-
 </body>
 </html>

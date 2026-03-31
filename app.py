@@ -72,9 +72,9 @@ def _parse_excel_pagares(file_storage) -> list[dict]:
     form_rows = []
     row_id = 1
     for row in rows[data_start:]:
-        vn = row[indices["valor_nominal"]] if len(row) > indices["valor_nominal"] else None
-        fv = row[indices["fecha_vencimiento"]] if len(row) > indices["fecha_vencimiento"] else None
-        tna = row[indices["tna_descuento"]] if len(row) > indices["tna_descuento"] else None
+        vn  = row[indices["valor_nominal"]]      if len(row) > indices["valor_nominal"]      else None
+        fv  = row[indices["fecha_vencimiento"]]  if len(row) > indices["fecha_vencimiento"]  else None
+        tna = row[indices["tna_descuento"]]      if len(row) > indices["tna_descuento"]      else None
 
         if vn in (None, "") and fv in (None, "") and tna in (None, ""):
             continue
@@ -93,10 +93,10 @@ def _parse_excel_pagares(file_storage) -> list[dict]:
 
         form_rows.append(
             {
-                "row_id": str(row_id),
-                "valor_nominal": "" if vn is None else str(vn),
-                "fecha_vencimiento": "" if fv is None else fv,
-                "tna_descuento": "" if tna is None else str(tna),
+                "row_id":            str(row_id),
+                "valor_nominal":     "" if vn  is None else str(vn),
+                "fecha_vencimiento": "" if fv  is None else fv,
+                "tna_descuento":     "" if tna is None else str(tna),
             }
         )
         row_id += 1
@@ -107,49 +107,60 @@ def _parse_excel_pagares(file_storage) -> list[dict]:
     return form_rows
 
 
+def _defaults_base():
+    return {
+        "fecha_operacion":  date.today().isoformat(),
+        "plazo_operacion":  "T+0",
+        "tna_arancel":      "1.5",
+        "comision_pct":     "0.5",
+        "tipo_cambio_bna":  "",
+    }
+
+
+def _empty_row():
+    return {
+        "row_id":            "1",
+        "valor_nominal":     "",
+        "fecha_vencimiento": "",
+        "tna_descuento":     "",
+    }
+
+
 @app.route("/", methods=["GET", "POST"])
 def index():
-    resultado = None
-    error = None
-    defaults = {
-        "fecha_operacion": date.today().isoformat(),
-        "plazo_operacion": "T+0",
-        "tna_arancel": "1.5",
-        "comision_pct": "0.5",
-    }
-    form_rows = [
-        {
-            "row_id": "1",
-            "valor_nominal": "",
-            "fecha_vencimiento": "",
-            "tna_descuento": "",
-        }
-    ]
+    resultado   = None
+    error       = None
+    defaults    = _defaults_base()
+    form_rows   = [_empty_row()]
     next_row_id = 2
 
     if request.method == "POST":
         try:
             # ===== Datos generales =====
             fecha_operacion_str = request.form.get("fecha_operacion")
-            plazo_operacion = request.form.get("plazo_operacion")
-            tna_arancel = request.form.get("tna_arancel")
-            comision_pct = request.form.get("comision_pct")
+            plazo_operacion     = request.form.get("plazo_operacion")
+            tna_arancel_str     = request.form.get("tna_arancel")
+            comision_pct_str    = request.form.get("comision_pct")
+            tipo_cambio_str     = request.form.get("tipo_cambio_bna")
 
-            if fecha_operacion_str:
-                defaults["fecha_operacion"] = fecha_operacion_str
-            if plazo_operacion:
-                defaults["plazo_operacion"] = plazo_operacion
-            if tna_arancel:
-                defaults["tna_arancel"] = tna_arancel
-            if comision_pct:
-                defaults["comision_pct"] = comision_pct
+            for key, val in [
+                ("fecha_operacion", fecha_operacion_str),
+                ("plazo_operacion", plazo_operacion),
+                ("tna_arancel",     tna_arancel_str),
+                ("comision_pct",    comision_pct_str),
+                ("tipo_cambio_bna", tipo_cambio_str),
+            ]:
+                if val:
+                    defaults[key] = val
 
-            if not all([fecha_operacion_str, plazo_operacion, tna_arancel, comision_pct]):
+            if not all([fecha_operacion_str, plazo_operacion,
+                        tna_arancel_str, comision_pct_str, tipo_cambio_str]):
                 raise ValueError("Faltan datos generales de la operación")
 
-            fecha_operacion = datetime.strptime(fecha_operacion_str, "%Y-%m-%d").date()
-            tna_arancel = _parse_float(tna_arancel, "Arancel TNA")
-            comision_pct = _parse_float(comision_pct, "Comisión")
+            fecha_operacion  = datetime.strptime(fecha_operacion_str, "%Y-%m-%d").date()
+            tna_arancel      = _parse_float(tna_arancel_str,  "Arancel TNA")
+            comision_pct     = _parse_float(comision_pct_str, "Comisión")
+            tipo_cambio_bna  = _parse_float(tipo_cambio_str,  "Tipo de cambio BNA")
 
             if plazo_operacion not in ("T+0", "T+1"):
                 raise ValueError("El plazo debe ser 'T+0' o 'T+1'")
@@ -157,12 +168,14 @@ def index():
                 raise ValueError("El arancel no puede ser negativo")
             if comision_pct < 0:
                 raise ValueError("La comisión no puede ser negativa")
+            if tipo_cambio_bna <= 0:
+                raise ValueError("El tipo de cambio BNA debe ser mayor a 0")
 
             # ===== Datos por pagaré =====
-            valores = request.form.getlist("valor_nominal[]")
-            vencimientos = request.form.getlist("fecha_vencimiento[]")
-            tasas = request.form.getlist("tna_descuento[]")
-            row_ids = request.form.getlist("row_id[]")
+            valores       = request.form.getlist("valor_nominal[]")
+            vencimientos  = request.form.getlist("fecha_vencimiento[]")
+            tasas         = request.form.getlist("tna_descuento[]")
+            row_ids       = request.form.getlist("row_id[]")
             delete_row_id = request.form.get("delete_row_id")
 
             if not valores or not vencimientos or not tasas:
@@ -171,32 +184,20 @@ def index():
             if not row_ids:
                 row_ids = [str(i) for i in range(1, len(valores) + 1)]
 
-            filtered = []
-            for vn, fv, tna, row_id in zip(valores, vencimientos, tasas, row_ids):
-                if delete_row_id and row_id == delete_row_id:
-                    continue
-                filtered.append((vn, fv, tna, row_id))
+            filtered = [
+                (vn, fv, tna, rid)
+                for vn, fv, tna, rid in zip(valores, vencimientos, tasas, row_ids)
+                if not (delete_row_id and rid == delete_row_id)
+            ]
 
-            form_rows = []
-            for vn, fv, tna, row_id in filtered:
-                form_rows.append(
-                    {
-                        "row_id": row_id,
-                        "valor_nominal": vn,
-                        "fecha_vencimiento": fv,
-                        "tna_descuento": tna,
-                    }
-                )
+            form_rows = [
+                {"row_id": rid, "valor_nominal": vn,
+                 "fecha_vencimiento": fv, "tna_descuento": tna}
+                for vn, fv, tna, rid in filtered
+            ]
 
             if not form_rows:
-                form_rows = [
-                    {
-                        "row_id": "1",
-                        "valor_nominal": "",
-                        "fecha_vencimiento": "",
-                        "tna_descuento": "",
-                    }
-                ]
+                form_rows = [_empty_row()]
                 next_row_id = 2
             else:
                 try:
@@ -207,38 +208,37 @@ def index():
             detalle = []
             errores = []
             totales = {
-                "cantidad_pagares": 0,
-                "valor_nominal": 0,
-                "ppv": 0,
-                "descuento": 0,
-                "valor_descontado": 0,
-                "derechos_mercado": 0,
-                "arancel": 0,
-                "comision": 0,
-                "iva": 0,
-                "iibb": 0,
-                "neto_a_recibir": 0,
+                "cantidad_pagares":    0,
+                "valor_nominal_usd":   0,
+                "ppv":                 0,
+                "descuento_usd":       0,
+                "valor_descontado_usd": 0,
+                "arancel_usd":         0,
+                "comision_usd":        0,
+                "iva_usd":             0,
+                "iibb_usd":            0,
+                "neto_usd":            0,
+                "derechos_mercado_ars": 0,
+                "iva_derechos_ars":    0,
             }
-            ppv_numerador = 0
-            ppv_denominador = 0
+            ppv_num = 0
+            ppv_den = 0
 
-            for idx, (vn, fv, tna, row_id) in enumerate(filtered, start=1):
-
+            for idx, (vn, fv, tna, rid) in enumerate(filtered, start=1):
                 if not vn and not fv and not tna:
-                    continue  # fila en blanco
+                    continue
 
                 if not vn or not fv or not tna:
                     errores.append(f"Fila {idx}: complete valor nominal, vencimiento y TNA")
                     continue
 
                 try:
-                    valor_nominal = _parse_float(vn, f"Valor nominal (fila {idx})")
-                    tna_descuento = _parse_float(tna, f"TNA descuento (fila {idx})")
+                    valor_nominal  = _parse_float(vn,  f"Valor nominal (fila {idx})")
+                    tna_descuento  = _parse_float(tna, f"TNA descuento (fila {idx})")
                     if valor_nominal <= 0:
                         raise ValueError("El valor nominal debe ser mayor a 0")
                     if tna_descuento < 0:
                         raise ValueError("La TNA de descuento no puede ser negativa")
-
                     fecha_vencimiento = datetime.strptime(fv, "%Y-%m-%d").date()
                 except ValueError as e:
                     errores.append(f"Fila {idx}: {e}")
@@ -253,22 +253,22 @@ def index():
                         tna_descuento=tna_descuento,
                         tna_arancel=tna_arancel,
                         comision_pct=comision_pct,
+                        tipo_cambio_bna=tipo_cambio_bna,
                     )
                 except Exception as e:
                     errores.append(f"Fila {idx}: {e}")
                     continue
 
-                ppv_dias = (res["fecha_cobro"] - fecha_operacion).days
+                ppv_dias      = (res["fecha_cobro"] - fecha_operacion).days
                 res["ppv_dias"] = ppv_dias
-
-                res["row_id"] = row_id
+                res["row_id"]   = rid
                 detalle.append(res)
 
                 for k in totales:
                     totales[k] += res.get(k, 0)
                 totales["cantidad_pagares"] += 1
-                ppv_numerador += valor_nominal * ppv_dias
-                ppv_denominador += valor_nominal
+                ppv_num += valor_nominal * ppv_dias
+                ppv_den += valor_nominal
 
             if errores and not detalle:
                 raise ValueError(" | ".join(errores))
@@ -277,12 +277,13 @@ def index():
             if not detalle:
                 raise ValueError("No hay pagarés válidos para calcular")
 
-            if ppv_denominador > 0:
-                totales["ppv"] = round(ppv_numerador / ppv_denominador, 0)
+            if ppv_den > 0:
+                totales["ppv"] = round(ppv_num / ppv_den, 0)
 
             resultado = {
-                "detalle": detalle,
-                "totales": totales,
+                "detalle":        detalle,
+                "totales":        totales,
+                "tipo_cambio_bna": tipo_cambio_bna,
             }
 
         except Exception as e:
@@ -300,23 +301,17 @@ def index():
 
 @app.route("/cargar-excel", methods=["POST"])
 def cargar_excel():
-    error = None
-    resultado = None
-    defaults = {
-        "fecha_operacion": date.today().isoformat(),
-        "plazo_operacion": "T+0",
-        "tna_arancel": "1.5",
-        "comision_pct": "0.5",
-    }
-    form_rows = [
-        {
-            "row_id": "1",
-            "valor_nominal": "",
-            "fecha_vencimiento": "",
-            "tna_descuento": "",
-        }
-    ]
+    error       = None
+    resultado   = None
+    defaults    = _defaults_base()
+    form_rows   = [_empty_row()]
     next_row_id = 2
+
+    # Preservar datos generales enviados junto con el Excel
+    for key in defaults:
+        val = request.form.get(key)
+        if val:
+            defaults[key] = val
 
     file = request.files.get("excel_file")
     if not file or file.filename == "":
