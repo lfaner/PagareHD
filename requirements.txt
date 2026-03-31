@@ -1,0 +1,4 @@
+Flask
+openpyxl
+gunicorn
+cgb-utils @ git+https://github.com/lfaner/cgb-utils.git@v0.2.0
