@@ -26,8 +26,8 @@ def calcular_neto_pagare(
 
     Monedas:
       USD : valor nominal, descuento, valor descontado, arancel,
-            comisión, IVA (sobre arancel + comisión), IIBB, neto
-      ARS : derechos de mercado, IVA sobre derechos
+            comisión, IVA (sobre arancel + comisión), neto
+      ARS : derechos de mercado, IVA sobre derechos, IIBB
             (convertidos desde USD usando tipo_cambio_bna)
     """
 
@@ -63,7 +63,7 @@ def calcular_neto_pagare(
     )
 
     fecha_vencimiento = siguiente_habil(fecha_vencimiento)
-    fecha_cobro = sumar_dias_habiles(fecha_vencimiento, 1)   # clearing T+1
+    fecha_cobro = sumar_dias_habiles(fecha_vencimiento, 2)   # clearing T+2
 
     plazo = (fecha_cobro - fecha_acreditacion).days
     if plazo <= 0:
@@ -79,17 +79,16 @@ def calcular_neto_pagare(
     arancel   = valor_nominal * (tna_arancel / 100) * plazo / DIAS_ANIO
     comision  = valor_nominal * (comision_pct / 100)
     iva_usd   = (arancel + comision) * IVA_PCT
-    iibb_usd  = valor_descontado * IIBB_PCT
 
-    neto_usd = valor_nominal - descuento - arancel - comision - iva_usd - iibb_usd
+    neto_usd = valor_nominal - descuento - arancel - comision - iva_usd
 
     # ----------------------------------------------------------
-    # Derechos de mercado — se calculan sobre valor descontado
-    # (en USD) y se cobran en ARS al tipo de cambio BNA
+    # Cargos en ARS (convertidos desde USD al tipo de cambio BNA)
     # ----------------------------------------------------------
     derechos_usd     = calcular_derechos_mercado(valor_descontado, plazo)
     derechos_ars     = derechos_usd * tipo_cambio_bna
     iva_derechos_ars = derechos_ars * IVA_PCT
+    iibb_ars         = valor_descontado * IIBB_PCT * tipo_cambio_bna
 
     # ----------------------------------------------------------
     # Resultado
@@ -109,10 +108,10 @@ def calcular_neto_pagare(
         "arancel_usd":         round(arancel,          2),
         "comision_usd":        round(comision,         2),
         "iva_usd":             round(iva_usd,          2),
-        "iibb_usd":            round(iibb_usd,         2),
         "neto_usd":            round(neto_usd,         2),
         # ARS
-        "tipo_cambio_bna":     round(tipo_cambio_bna,  2),
-        "derechos_mercado_ars": round(derechos_ars,    2),
-        "iva_derechos_ars":    round(iva_derechos_ars, 2),
+        "tipo_cambio_bna":      round(tipo_cambio_bna,  2),
+        "derechos_mercado_ars": round(derechos_ars,     2),
+        "iva_derechos_ars":     round(iva_derechos_ars, 2),
+        "iibb_ars":             round(iibb_ars,         2),
     }

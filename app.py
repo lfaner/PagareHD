@@ -216,10 +216,10 @@ def index():
                 "arancel_usd":         0,
                 "comision_usd":        0,
                 "iva_usd":             0,
-                "iibb_usd":            0,
                 "neto_usd":            0,
                 "derechos_mercado_ars": 0,
                 "iva_derechos_ars":    0,
+                "iibb_ars":            0,
             }
             ppv_num = 0
             ppv_den = 0

@@ -200,9 +200,9 @@
                 <th rowspan="2">Plazo</th>
                 <th rowspan="2">TNA %</th>
                 <!-- USD -->
-                <th colspan="6" class="text-center">USD</th>
+                <th colspan="5" class="text-center">USD</th>
                 <!-- ARS -->
-                <th colspan="2" class="text-center th-ars">ARS</th>
+                <th colspan="3" class="text-center th-ars">ARS</th>
                 <th rowspan="2"></th>
             </tr>
             <tr>
@@ -210,10 +210,10 @@
                 <th>Arancel</th>
                 <th>Comisión</th>
                 <th>IVA</th>
-                <th>IIBB</th>
                 <th class="neto">Neto</th>
                 <th class="th-ars">Derechos</th>
                 <th class="th-ars">IVA Der.</th>
+                <th class="th-ars">IIBB</th>
             </tr>
         </thead>
         <tbody>
@@ -230,11 +230,11 @@
                 <td class="num">{{ usd(r.arancel_usd) }}</td>
                 <td class="num">{{ usd(r.comision_usd) }}</td>
                 <td class="num">{{ usd(r.iva_usd) }}</td>
-                <td class="num">{{ usd(r.iibb_usd) }}</td>
                 <td class="num fw-bold neto">{{ usd(r.neto_usd) }}</td>
                 <!-- ARS -->
                 <td class="num ars-col">{{ ars(r.derechos_mercado_ars) }}</td>
                 <td class="num ars-col">{{ ars(r.iva_derechos_ars) }}</td>
+                <td class="num ars-col">{{ ars(r.iibb_ars) }}</td>
                 <td class="text-center">
                     <button type="button" class="btn btn-sm btn-outline-danger"
                             onclick="eliminarPagare('{{ r.row_id }}')">Eliminar</button>
@@ -253,10 +253,10 @@
                 <th class="num">{{ usd(resultado.totales.arancel_usd) }}</th>
                 <th class="num">{{ usd(resultado.totales.comision_usd) }}</th>
                 <th class="num">{{ usd(resultado.totales.iva_usd) }}</th>
-                <th class="num">{{ usd(resultado.totales.iibb_usd) }}</th>
                 <th class="num fw-bold neto">{{ usd(resultado.totales.neto_usd) }}</th>
                 <th class="num ars-col">{{ ars(resultado.totales.derechos_mercado_ars) }}</th>
                 <th class="num ars-col">{{ ars(resultado.totales.iva_derechos_ars) }}</th>
+                <th class="num ars-col">{{ ars(resultado.totales.iibb_ars) }}</th>
                 <th></th>
             </tr>
         </tfoot>
@@ -285,8 +285,6 @@
                         <td class="text-end">{{ usd(resultado.totales.comision_usd) }}</td></tr>
                     <tr><th>IVA</th>
                         <td class="text-end">{{ usd(resultado.totales.iva_usd) }}</td></tr>
-                    <tr><th>IIBB</th>
-                        <td class="text-end">{{ usd(resultado.totales.iibb_usd) }}</td></tr>
                     <tr class="neto-row"><th>Neto a recibir</th>
                         <td class="text-end">{{ usd(resultado.totales.neto_usd) }}</td></tr>
                 </table>
@@ -302,8 +300,10 @@
                         <td class="text-end fw-bold">$ {{ resultado.tipo_cambio_bna | round(2) }}</td></tr>
                     <tr><th>Derechos de mercado</th>
                         <td class="text-end">{{ ars(resultado.totales.derechos_mercado_ars) }}</td></tr>
-                    <tr class="neto-row"><th>IVA sobre derechos</th>
+                    <tr><th>IVA sobre derechos</th>
                         <td class="text-end">{{ ars(resultado.totales.iva_derechos_ars) }}</td></tr>
+                    <tr class="neto-row"><th>IIBB</th>
+                        <td class="text-end">{{ ars(resultado.totales.iibb_ars) }}</td></tr>
                 </table>
             </div>
         </div>
