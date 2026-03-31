@@ -302,8 +302,10 @@
                         <td class="text-end">{{ ars(resultado.totales.derechos_mercado_ars) }}</td></tr>
                     <tr><th>IVA sobre derechos</th>
                         <td class="text-end">{{ ars(resultado.totales.iva_derechos_ars) }}</td></tr>
-                    <tr class="neto-row"><th>IIBB</th>
+                    <tr><th>IIBB</th>
                         <td class="text-end">{{ ars(resultado.totales.iibb_ars) }}</td></tr>
+                    <tr class="neto-row"><th>Total ARS</th>
+                        <td class="text-end fw-bold">{{ ars(resultado.totales.total_ars) }}</td></tr>
                 </table>
             </div>
         </div>

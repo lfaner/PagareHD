@@ -280,6 +280,13 @@ def index():
             if ppv_den > 0:
                 totales["ppv"] = round(ppv_num / ppv_den, 0)
 
+            totales["total_ars"] = round(
+                totales["derechos_mercado_ars"]
+                + totales["iva_derechos_ars"]
+                + totales["iibb_ars"],
+                2,
+            )
+
             resultado = {
                 "detalle":        detalle,
                 "totales":        totales,
