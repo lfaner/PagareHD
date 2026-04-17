@@ -20,7 +20,7 @@ def calcular_cft_tea_cartera(detalle: list[dict]) -> float:
         raise ValueError("No hay pagarés para calcular el CFT")
 
     flujos = [
-        (p["neto_sin_iva_usd"], p["valor_nominal_usd"], p["plazo_dias"])
+        (p["neto_usd"], p["valor_nominal_usd"], p["plazo_dias"])
         for p in detalle
     ]
 
@@ -45,7 +45,7 @@ def calcular_cft_tea_cartera(detalle: list[dict]) -> float:
         if (hi - lo) < 1e-10:
             break
 
-    return round((lo + hi) / 2 * 100, 2)    # retorna como %
+    return round((lo + hi) / 2 * 100, 2)   # retorna como %
 
 
 # ============================================================
@@ -53,23 +53,22 @@ def calcular_cft_tea_cartera(detalle: list[dict]) -> float:
 # ============================================================
 
 def calcular_neto_pagare(
-    valor_nominal: float,       # USD
+    valor_nominal: float,        # USD
     fecha_operacion: date,
     fecha_vencimiento: date,
-    plazo_operacion: str,       # "T+0" o "T+1"
-    tna_descuento: float,       # %
-    tna_arancel: float,         # %
-    comision_pct: float,        # %
-    tipo_cambio_bna: float,     # ARS/USD — vendedor BNA del día hábil anterior
+    plazo_operacion: str,        # "T+0" o "T+1"
+    tna_descuento: float,        # %
+    tna_arancel: float,          # %
+    comision_pct: float,         # %
+    tipo_cambio_bna: float,      # ARS/USD — vendedor BNA del día hábil anterior
 ) -> dict:
     """
     Calcula el neto de un pagaré Hard Dólar.
 
     Monedas:
-      USD : valor nominal, descuento, valor descontado, arancel,
-            comisión, IVA (sobre arancel + comisión), neto
-      ARS : derechos de mercado, IVA sobre derechos, IIBB
-            (convertidos desde USD usando tipo_cambio_bna)
+      USD : valor nominal, descuento, valor descontado, arancel, comisión, neto
+      ARS : IVA (sobre arancel + comisión), derechos de mercado, IVA sobre
+            derechos, IIBB (convertidos desde USD usando tipo_cambio_bna)
     """
 
     DIAS_ANIO = 365
@@ -119,42 +118,40 @@ def calcular_neto_pagare(
 
     arancel   = valor_nominal * (tna_arancel / 100) * plazo / DIAS_ANIO
     comision  = valor_nominal * (comision_pct / 100)
-    iva_usd   = (arancel + comision) * IVA_PCT
 
-    neto_usd         = valor_nominal - descuento - arancel - comision - iva_usd
-    neto_sin_iva_usd = valor_nominal - descuento - arancel - comision
+    neto_usd = valor_nominal - descuento - arancel - comision
 
     # ----------------------------------------------------------
     # Cargos en ARS (convertidos desde USD al tipo de cambio BNA)
     # ----------------------------------------------------------
-    derechos_usd     = calcular_derechos_mercado(valor_descontado, plazo)
-    derechos_ars     = derechos_usd * tipo_cambio_bna
-    iva_derechos_ars = derechos_ars * IVA_PCT
-    iibb_ars         = valor_descontado * IIBB_PCT * tipo_cambio_bna
+    iva_ars            = (arancel + comision) * IVA_PCT * tipo_cambio_bna
+    derechos_usd       = calcular_derechos_mercado(valor_descontado, plazo)
+    derechos_ars       = derechos_usd * tipo_cambio_bna
+    iva_derechos_ars   = derechos_ars * IVA_PCT
+    iibb_ars           = valor_descontado * IIBB_PCT * tipo_cambio_bna
 
     # ----------------------------------------------------------
     # Resultado
     # ----------------------------------------------------------
     return {
         # Fechas y plazo
-        "fecha_operacion":    fecha_operacion,
+        "fecha_operacion":   fecha_operacion,
         "fecha_acreditacion": fecha_acreditacion,
         "fecha_vencimiento":  fecha_vencimiento,
         "fecha_cobro":        fecha_cobro,
         "plazo_dias":         plazo,
         # USD
-        "valor_nominal_usd":   round(valor_nominal,    2),
-        "tna_descuento":       round(tna_descuento,    4),
-        "descuento_usd":       round(descuento,        2),
-        "valor_descontado_usd": round(valor_descontado, 2),
-        "arancel_usd":         round(arancel,          2),
-        "comision_usd":        round(comision,         2),
-        "iva_usd":             round(iva_usd,          2),
-        "neto_usd":            round(neto_usd,         2),
-        "neto_sin_iva_usd":    round(neto_sin_iva_usd, 2),
+        "valor_nominal_usd":    round(valor_nominal,     2),
+        "tna_descuento":        round(tna_descuento,     4),
+        "descuento_usd":        round(descuento,         2),
+        "valor_descontado_usd": round(valor_descontado,  2),
+        "arancel_usd":          round(arancel,           2),
+        "comision_usd":         round(comision,          2),
+        "neto_usd":             round(neto_usd,          2),
         # ARS
-        "tipo_cambio_bna":      round(tipo_cambio_bna,  2),
-        "derechos_mercado_ars": round(derechos_ars,     2),
-        "iva_derechos_ars":     round(iva_derechos_ars, 2),
-        "iibb_ars":             round(iibb_ars,         2),
+        "tipo_cambio_bna":      round(tipo_cambio_bna,   2),
+        "iva_ars":              round(iva_ars,            2),
+        "derechos_mercado_ars": round(derechos_ars,       2),
+        "iva_derechos_ars":     round(iva_derechos_ars,   2),
+        "iibb_ars":             round(iibb_ars,           2),
     }
